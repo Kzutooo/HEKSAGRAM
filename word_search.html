@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Word Search - 3 Algoritma</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0d0d1a;--surface:#141428;--surface2:#1c1c38;
+  --accent:#e94560;--gold:#f5a623;--green:#00d4aa;
+  --blue:#4fc3f7;--text:#e8e8f0;--text2:#7777aa;
+  --cell:34px;
+}
+body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--text);user-select:none}
+.app{max-width:920px;margin:0 auto;padding:14px}
+
+.header{text-align:center;margin-bottom:12px}
+.header h1{font-size:26px;font-weight:800;background:linear-gradient(135deg,var(--accent),var(--gold),var(--green));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:-1px}
+.header p{color:var(--text2);font-size:10px;font-family:'Space Mono',monospace;letter-spacing:3px;margin-top:2px}
+
+.algo-bar{display:flex;gap:8px;margin-bottom:12px;justify-content:center}
+.algo-card{flex:1;max-width:320px;padding:10px 14px;border-radius:12px;background:var(--surface);border:1.5px solid var(--accent);text-align:center;background-color:#1a0a10}
+.algo-card .algo-name{font-size:13px;font-weight:800;margin-bottom:2px;color:var(--gold)}
+.algo-card .algo-desc{font-size:9px;color:var(--text2);font-family:'Space Mono',monospace;line-height:1.5}
+.algo-card .algo-badge{display:inline-block;font-size:8px;padding:2px 6px;border-radius:20px;font-family:'Space Mono',monospace;margin-top:4px;font-weight:700;background:#f5a62320;color:var(--gold)}
+
+.layout{display:grid;grid-template-columns:1fr 190px;gap:12px;align-items:start}
+
+.grid-panel{background:var(--surface);border-radius:16px;padding:14px;border:1px solid #ffffff0d}
+.panel-label{font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--text2);font-family:'Space Mono',monospace;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center}
+
+#grid{display:inline-grid;gap:2px;cursor:crosshair}
+
+.cell{width:var(--cell);height:var(--cell);display:flex;align-items:center;justify-content:center;font-family:'Space Mono',monospace;font-size:13px;font-weight:700;border-radius:5px;background:var(--surface2);color:var(--text);transition:all .1s;border:1px solid #ffffff06;position:relative}
+.cell.sel{background:#e9456040;color:#ff6b8a;border-color:var(--accent);transform:scale(1.07)}
+/* Warna temuan kata */
+.cell.found-0{background:#e9456028;color:#ff7d95;border-color:#e9456055}
+.cell.found-1{background:#f5a62328;color:#ffc55a;border-color:#f5a62355}
+.cell.found-2{background:#00d4aa28;color:#00ffcc;border-color:#00d4aa55}
+.cell.found-3{background:#4fc3f728;color:#80d8ff;border-color:#4fc3f755}
+.cell.found-4{background:#bb86fc28;color:#d5a6ff;border-color:#bb86fc55}
+.cell.found-5{background:#ff8a6528;color:#ffaa80;border-color:#ff8a6555}
+.cell.found-6{background:#69f0ae28;color:#b9f6ca;border-color:#69f0ae55}
+.cell.found-7{background:#e040fb28;color:#ea80fc;border-color:#e040fb55}
+.cell.ucs-scan{background:#4fc3f760;border-color:var(--blue);box-shadow:0 0 10px var(--blue);transform:scale(1.1);z-index:10}
+
+.side{display:flex;flex-direction:column;gap:10px}
+.side-card{background:var(--surface);border-radius:14px;padding:12px;border:1px solid #ffffff0d}
+
+.word-item{display:flex;align-items:center;gap:6px;padding:5px 7px;border-radius:7px;margin-bottom:3px;font-family:'Space Mono',monospace;font-size:11px;font-weight:700;background:var(--surface2);letter-spacing:.5px}
+.word-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.word-item.found{opacity:.4}.word-item.found span{text-decoration:line-through}
+
+.score-row{display:flex;justify-content:space-between;margin-bottom:8px}
+.s-box{text-align:center}
+.s-val{font-size:20px;font-weight:800;font-family:'Space Mono',monospace}
+.s-lbl{font-size:8px;letter-spacing:2px;text-transform:uppercase;color:var(--text2)}
+
+.btn{width:100%;padding:9px;border-radius:9px;border:none;font-family:'Syne',sans-serif;font-weight:700;font-size:12px;cursor:pointer;transition:all .15s;margin-bottom:5px}
+.btn:active{transform:scale(.96)}
+.btn-new{background:var(--accent);color:#fff}
+.btn-new:hover{background:#ff5f77}
+.btn-ucs{background:var(--blue);color:#000;margin-top:5px;}
+.btn-ucs:hover{background:#80d8ff}
+
+.algo-info{background:var(--surface2);border-radius:8px;padding:8px 10px;font-family:'Space Mono',monospace;font-size:9px;color:var(--text2);line-height:1.6;border:1px solid #ffffff08;margin-top:6px}
+
+.timer{font-size:20px;font-weight:800;color:var(--accent);font-family:'Space Mono',monospace}
+.diff-row{display:flex;gap:4px;margin-bottom:6px}
+.dbtn{flex:1;padding:5px;border-radius:6px;border:1px solid #ffffff10;background:transparent;color:var(--text2);font-family:'Syne',sans-serif;font-weight:700;font-size:10px;cursor:pointer;transition:all .15s}
+.dbtn.active,.dbtn:hover{background:var(--surface2);color:var(--blue);border-color:var(--blue)}
+
+.win-ov{position:fixed;inset:0;background:#0d0d1acc;display:flex;align-items:center;justify-content:center;z-index:99;opacity:0;pointer-events:none;transition:opacity .4s}
+.win-ov.show{opacity:1;pointer-events:all}
+.win-card{background:var(--surface);border-radius:22px;padding:36px;text-align:center;border:1px solid #ffffff1a;transform:scale(.9);transition:transform .4s cubic-bezier(.34,1.56,.64,1);max-width:300px}
+.win-ov.show .win-card{transform:scale(1)}
+.win-e{font-size:52px;margin-bottom:10px}
+.win-t{font-size:24px;font-weight:800;color:var(--gold);margin-bottom:6px}
+.win-s{color:var(--text2);font-size:12px;font-family:'Space Mono',monospace;margin-bottom:20px;line-height:1.6}
+.step-badge{font-size:9px;padding:2px 8px;border-radius:20px;font-family:'Space Mono',monospace;font-weight:700;background:#ffffff10;color:var(--text2)}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <h1>⬡ WORD SEARCH</h1>
+    <p>Project Algoritma: Heuristic + Backtrack + UCS</p>
+  </div>
+
+  <div class="algo-bar">
+    <div class="algo-card">
+      <div class="algo-name">⚡ The 3-Algo Engine</div>
+      <div class="algo-desc">1. Heuristic (Penilai Grid)<br>2. Backtracking (Mesin Generator)<br>3. UCS (AI Auto-Solver)</div>
+      <span class="algo-badge">HYBRID SYSTEM</span>
+    </div>
+  </div>
+
+  <div class="layout">
+    <div class="grid-panel">
+      <div class="panel-label">
+        <span>▣ PUZZLE GRID</span>
+        <span class="step-badge">ACTIVE</span>
+      </div>
+      <div id="grid"></div>
+    </div>
+
+    <div class="side">
+      <div class="side-card">
+        <div class="score-row">
+          <div class="s-box"><div class="s-val" id="sv-found" style="color:var(--green)">0</div><div class="s-lbl">Found</div></div>
+          <div class="s-box"><div class="timer" id="sv-time">00:00</div><div class="s-lbl">Time</div></div>
+          <div class="s-box"><div class="s-val" id="sv-pts" style="color:var(--gold)">0</div><div class="s-lbl">Points</div></div>
+        </div>
+      </div>
+
+      <div class="side-card">
+        <div class="panel-label">◈ WORDS</div>
+        <div id="word-list"></div>
+      </div>
+
+      <div class="side-card">
+        <div class="panel-label">◆ CONTROLS</div>
+        <div class="diff-row">
+          <button class="dbtn active" onclick="setDiff('easy',this)">Easy</button>
+          <button class="dbtn" onclick="setDiff('med',this)">Med</button>
+          <button class="dbtn" onclick="setDiff('hard',this)">Hard</button>
+        </div>
+        <button class="btn btn-new" onclick="newGame()">⊕ New Game</button>
+        <button class="btn btn-ucs" onclick="runUCS()">🤖 AI Auto-Solve (UCS)</button>
+        <div class="algo-info" id="algo-info-box">
+          Pilih level dan mainkan. Jika kesulitan, gunakan fitur <b>AI Auto-Solve</b> yang digerakkan oleh algoritma Uniform Cost Search.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="win-ov" id="win-ov">
+  <div class="win-card">
+    <div class="win-e">🏆</div>
+    <div class="win-t">SELESAI!</div>
+    <div class="win-s" id="win-s">—</div>
+    <button class="btn btn-new" onclick="document.getElementById('win-ov').classList.remove('show');newGame()">Main Lagi →</button>
+  </div>
+</div>
+
+<script>
+const POOLS = {
+  easy:  ['JAVA','PHP','RUBY','HTML','CSS','SQL','NODE','RUST','DART','GO','PERL','BASH'],
+  med:   ['PYTHON','KOTLIN','GOLANG','REACT','ANGULAR','VUEJS','SWIFT','SCALA','HASKELL','ELIXIR','DJANGO','SPRING'],
+  hard:  ['ALGORITHM','HEURISTIC','BACKTRACK','UNIFORM','COSTSEARCH','DATABASE','FRAMEWORK','INTERFACE','INHERITANCE','POLYMORPHISM','ABSTRACTION','ENCAPSULATION']
+};
+
+const DIRS8 = [[0,1],[1,0],[0,-1],[-1,0],[1,1],[1,-1],[-1,1],[-1,-1]];
+const FCOLS = ['found-0','found-1','found-2','found-3','found-4','found-5','found-6','found-7'];
+const DOTCOLS = ['#e94560','#f5a623','#00d4aa','#4fc3f7','#bb86fc','#ff8a65','#69f0ae','#e040fb'];
+
+let grid=[], N=12, words=[], placed=[], found=[];
+let selActive=false, startCell=null, selCells=[];
+let score=0, pts=0, seconds=0, timerInt=null, gameOn=false;
+let diff='easy';
+
+function setDiff(d, el) {
+  diff = d;
+  document.querySelectorAll('.dbtn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  newGame();
+}
+
+// ========== SISTEM GAME ==========
+function newGame() {
+  clearInterval(timerInt);
+  seconds=0; score=0; pts=0; found=[]; selActive=false; startCell=null; selCells=[];
+  gameOn=false;
+
+  const pool = POOLS[diff];
+  const cnt = diff==='easy'?6:diff==='med'?7:8;
+  N = diff==='easy'?11:diff==='med'?13:15;
+  words = shuffle([...pool]).slice(0, cnt);
+
+  buildHybrid(); // Memanggil generator Heuristik + Backtracking
+
+  renderGrid();
+  renderWords();
+  updateScores();
+  document.getElementById('win-ov').classList.remove('show');
+
+  gameOn = true;
+  timerInt = setInterval(()=>{
+    seconds++;
+    const m=String(Math.floor(seconds/60)).padStart(2,'0');
+    const s=String(seconds%60).padStart(2,'0');
+    document.getElementById('sv-time').textContent=m+':'+s;
+  },1000);
+}
+
+// =========================================================================
+// [ALGORITMA 1 & 2] : GENERATOR GRID (HEURISTIK + BACKTRACKING)
+// Tujuan: Membuat grid yang padat, saling bersilangan, dan tanpa error.
+// =========================================================================
+function buildHybrid() {
+  grid = mkGrid();
+  placed = [];
+  
+  // (ALGORITMA 1 - HEURISTIK TAHAP 1): Urutkan array kata dari terpanjang ke terpendek.
+  // Alasan: Kata panjang lebih sulit diletakkan saat grid sudah penuh, jadi harus diprioritaskan.
+  const sorted = [...words].sort((a,b) => b.length - a.length);
+  
+  // Memulai proses rekursif backtracking
+  btPlaceHybrid(sorted, 0);
+  fillRandom(); // Mengisi sisa grid kosong dengan huruf acak
+}
+
+function btPlaceHybrid(wordsList, idx) {
+  // Base case rekursi: Jika indeks sudah mencapai panjang array, berarti semua kata berhasil ditempatkan
+  if (idx >= wordsList.length) return true; 
+  
+  const word = wordsList[idx];
+  const candidates = [];
+
+  // Looping seluruh sel grid untuk mencari titik awal (x, y) yang mungkin
+  for (let r=0; r<N; r++) {
+    for (let c=0; c<N; c++) {
+      // Looping 8 arah mata angin
+      for (const [dr, dc] of DIRS8) {
+        // Cek apakah kata bisa masuk ke posisi dan arah ini tanpa menabrak huruf yang tidak cocok
+        const cells = wordCells(word, r, c, dr, dc);
+        if (cells) {
+          // (ALGORITMA 1 - HEURISTIK TAHAP 2): Evaluasi nilai dari posisi ini
+          const score = heuristicScore(word, cells);
+          candidates.push({ cells, score }); // Simpan sebagai kandidat
+        }
+      }
+    }
+  }
+
+  // (ALGORITMA 1 - HEURISTIK TAHAP 3): Urutkan kandidat berdasarkan skor tertinggi ke terendah.
+  // Backtracking akan selalu mencoba posisi yang paling menguntungkan terlebih dahulu.
+  candidates.sort((a, b) => b.score - a.score);
+
+  // (ALGORITMA 2 - BACKTRACKING): Coba letakkan kata, lalu evaluasi.
+  for (const {cells} of candidates) {
+    // 1. Simpan kondisi grid saat ini (State Backup)
+    const backup = cells.map(([r,c]) => [r, c, grid[r][c]]);
+    
+    // 2. Tulis kata ke dalam grid
+    cells.forEach(([r,c], i) => grid[r][c] = word[i]);
+    placed.push({word, cells});
+
+    // 3. Coba tempatkan kata berikutnya secara rekursif (Lanjut ke kedalaman / Depth)
+    if (btPlaceHybrid(wordsList, idx + 1)) return true; // Jika berhasil, kembalikan true ke atas
+
+    // 4. BACKTRACK: Jika return false (berarti ada jalan buntu di masa depan), 
+    // Hapus kata dari placed, dan kembalikan grid ke kondisi backup awal.
+    placed.pop();
+    backup.forEach(([r,c,v]) => grid[r][c] = v);
+  }
+  
+  // Jika seluruh kemungkinan iterasi di atas mentok, nyatakan gagal pada cabang ini
+  return false; 
+}
+
+function heuristicScore(word, cells) {
+  let score = 0;
+  // Bobot 1: Intersection (Persilangan). Jika menimpa huruf yang sama yang sudah ada, beri +5 poin.
+  cells.forEach(([r,c],i)=>{ if(grid[r][c]===word[i] && grid[r][c]!=='') score+=5; });
+  
+  // Bobot 2: Sentralitas. Memilih posisi yang lebih ke tengah papan untuk mengurangi kata menumpuk di pinggir.
+  const cx=N/2, cy=N/2;
+  const avgDist = cells.reduce((s,[r,c])=>s+Math.abs(r-cx)+Math.abs(c-cy),0)/cells.length;
+  score += (N - avgDist); 
+  
+  return score;
+}
+
+// =========================================================================
+// [ALGORITMA 3] : AI AUTO-SOLVER (UNIFORM COST SEARCH / UCS)
+// Tujuan: Sistem bantuan pintar yang mencari kata di dalam graf grid
+// menggunakan prioritas rute dengan bobot (cost) paling efisien.
+// =========================================================================
+function runUCS() {
+  if(!gameOn) return;
+  // Cari satu kata dari array 'words' yang belum masuk di array 'found'
+  const target = words.find(w => !found.includes(w));
+  if(!target) return; // Jika semua sudah ketemu, batalkan
+
+  // Inisialisasi Priority Queue (Antrean Prioritas) untuk algoritma UCS
+  // Format Node: { r (baris), c (kolom), dir (arah jalan), step (indeks huruf), cost (total bobot), path (jejak rute) }
+  const pq = [];
+
+  // Fase 1: Pemindaian Titik Awal. Cari semua sel di grid yang sama dengan huruf pertama dari kata target.
+  for (let r=0; r<N; r++) {
+    for (let c=0; c<N; c++) {
+      if (grid[r][c] === target[0]) {
+        // Daftarkan Node awal ini ke Priority Queue untuk 8 arah kemungkinannya
+        DIRS8.forEach(d => {
+          pq.push({ r, c, dir: d, step: 1, cost: 0, path: [{r,c}] });
+        });
+      }
+    }
+  }
+
+  // Fase 2: Eksekusi UCS (Mengekspansi Node berdasarkan Cost Terendah)
+  let loopSafe = 0;
+  while (pq.length > 0 && loopSafe < 20000) {
+    loopSafe++;
+    
+    // Sort Queue secara Ascending (Cost terendah maju ke depan/Shift). Inti dari algoritma UCS.
+    pq.sort((a,b) => a.cost - b.cost);
+    const curr = pq.shift(); // Ambil Node dengan cost paling murah
+
+    // Kondisi Goal: Jika jumlah langkah (step) sama dengan panjang target kata, berarti selesai!
+    if (curr.step === target.length) {
+      // Simulasikan efek penemuan visual
+      curr.path.forEach(({r,c}) => {
+        const el = cell(r,c);
+        if(el) el.classList.add('ucs-scan');
+      });
+      setTimeout(() => {
+        curr.path.forEach(({r,c}) => cell(r,c)?.classList.remove('ucs-scan'));
+        // Panggil fungsi standar game untuk menandai kata ditemukan
+        processFoundWord(target, curr.path);
+      }, 800);
+      return; // Selesaikan fungsi UCS
+    }
+
+    // Kalkulasi sel berikutnya berdasarkan arah (dir) node saat ini
+    const nr = curr.r + curr.dir[0];
+    const nc = curr.c + curr.dir[1];
+
+    // Cek batas array (Boundary Check)
+    if (nr >= 0 && nr < N && nc >= 0 && nc < N) {
+      // Jika huruf di sel berikutnya cocok dengan urutan huruf (step) pada kata target
+      if (grid[nr][nc] === target[curr.step]) {
+        
+        // Penentuan Bobot (Cost). Dalam UCS Graf spasial: Lurus bernilai 10, Diagonal bernilai 14.
+        const moveCost = (curr.dir[0] !== 0 && curr.dir[1] !== 0) ? 14 : 10;
+        
+        // Push Node baru ke Priority Queue dengan akumulasi cost dan langkah
+        pq.push({
+          r: nr, c: nc, dir: curr.dir,
+          step: curr.step + 1,
+          cost: curr.cost + moveCost, // Total Cost = G(n) sebelumnya + Cost gerak baru
+          path: [...curr.path, {r:nr, c:nc}]
+        });
+      }
+    }
+  }
+}
+
+// ========== FUNGSI PEMBANTU (HELPERS) ==========
+
+function mkGrid() { return Array.from({length:N},()=>Array(N).fill('')); }
+
+function wordCells(word,r,c,dr,dc) {
+  const cells=[];
+  for (let i=0;i<word.length;i++) {
+    const nr=r+i*dr, nc=c+i*dc;
+    if (nr<0||nr>=N||nc<0||nc>=N) return null;
+    if (grid[nr][nc]!=='' && grid[nr][nc]!==word[i]) return null;
+    cells.push([nr,nc]);
+  }
+  return cells;
+}
+
+function fillRandom() {
+  const L='ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  for (let r=0;r<N;r++) for (let c=0;c<N;c++)
+    if (!grid[r][c]) grid[r][c]=L[Math.floor(Math.random()*26)];
+}
+
+function shuffle(a){ for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a; }
+
+// ========== RENDERING UI ==========
+
+function renderGrid() {
+  const gc=document.getElementById('grid');
+  gc.style.gridTemplateColumns=`repeat(${N},var(--cell))`;
+  gc.innerHTML='';
+  for (let r=0;r<N;r++) for (let c=0;c<N;c++) {
+    const el=document.createElement('div');
+    el.className='cell'; el.textContent=grid[r][c];
+    el.dataset.r=r; el.dataset.c=c;
+    el.addEventListener('mousedown',mdHandler);
+    el.addEventListener('mouseenter',meHandler);
+    gc.appendChild(el);
+  }
+  document.addEventListener('mouseup',muHandler);
+}
+
+function renderWords() {
+  const wl=document.getElementById('word-list'); wl.innerHTML='';
+  words.forEach((w,i)=>{
+    const d=document.createElement('div');
+    d.className='word-item'+(found.includes(w)?' found':'');
+    d.id='wi-'+w;
+    d.innerHTML=`<div class="word-dot" style="background:${DOTCOLS[i%8]}"></div><span>${w}</span>`;
+    wl.appendChild(d);
+  });
+  document.getElementById('sv-found').textContent=found.length;
+  document.getElementById('sv-pts').textContent=pts;
+}
+
+function updateScores() {
+  document.getElementById('sv-found').textContent=found.length;
+  document.getElementById('sv-pts').textContent=pts;
+}
+
+// ========== INTERAKSI MOUSE ==========
+
+function cell(r,c){ return document.querySelector(`.cell[data-r="${r}"][data-c="${c}"]`); }
+
+function mdHandler(e){
+  if(!gameOn)return; e.preventDefault();
+  selActive=true;
+  startCell={r:+e.target.dataset.r,c:+e.target.dataset.c};
+  selCells=[startCell]; clearSel();
+  cell(startCell.r,startCell.c)?.classList.add('sel');
+}
+
+function meHandler(e){
+  if(!selActive)return;
+  const r=+e.target.dataset.r,c=+e.target.dataset.c;
+  const dr=r-startCell.r,dc=c-startCell.c;
+  let dir=null;
+  for (const [dR,dC] of DIRS8) {
+    const len=Math.max(Math.abs(dr),Math.abs(dc));
+    if(len>0&&dr===dR*len&&dc===dC*len){dir=[dR,dC];break;}
+    if(dr===0&&dc===0){dir=[0,1];break;}
+  }
+  if(!dir)return;
+  clearSel(); selCells=[];
+  const len=Math.max(Math.abs(dr),Math.abs(dc));
+  for(let i=0;i<=len;i++){
+    const nr=startCell.r+i*dir[0],nc=startCell.c+i*dir[1];
+    if(nr<0||nr>=N||nc<0||nc>=N)break;
+    selCells.push({r:nr,c:nc});
+    cell(nr,nc)?.classList.add('sel');
+  }
+}
+
+function muHandler(){
+  if(!selActive)return; selActive=false;
+  checkSel(); clearSel(); selCells=[];
+}
+
+function clearSel(){ document.querySelectorAll('.cell.sel').forEach(e=>e.classList.remove('sel')); }
+
+function checkSel(){
+  if(selCells.length<2)return;
+  const w=selCells.map(({r,c})=>grid[r][c]).join('');
+  const rev=w.split('').reverse().join('');
+  const match=words.find(x=>!found.includes(x)&&(x===w||x===rev));
+  if(!match)return;
+  
+  const actualCells=(w===match)?selCells:[...selCells].reverse();
+  processFoundWord(match, actualCells);
+}
+
+// Terpisah agar bisa dipakai oleh sistem interaksi User dan juga AI Solver (UCS)
+function processFoundWord(matchWord, actualCells) {
+  found.push(matchWord);
+  const idx=words.indexOf(matchWord);
+  
+  // Warnai grid
+  actualCells.forEach(({r,c})=>{
+    const el=cell(r,c);
+    if(el){FCOLS.forEach(cc=>el.classList.remove(cc));el.classList.add(FCOLS[idx%8]);}
+  });
+  
+  // Coret dari daftar
+  const wi=document.getElementById('wi-'+matchWord);
+  if(wi)wi.classList.add('found');
+  
+  // Tambah poin dan update
+  pts+=matchWord.length*100;
+  updateScores();
+  
+  if(found.length===words.length)setTimeout(showWin,500);
+}
+
+function showWin(){
+gameOn=false; clearInterval(timerInt);
+const m=String(Math.floor(seconds/60)).padStart(2,'0');
+const s=String(seconds%60).padStart(2,'0');
+document.getElementById('win-s').innerHTML=
+    `Berhasil menemukan semua kata!<br>Waktu: ${m}:${s}<br>Score: ${pts} pts`;
+document.getElementById('win-ov').classList.add('show');
+}
+
+// Mulai game pertama kali
+newGame();
+</script>
+</body>
+</html>
